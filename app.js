@@ -6,6 +6,7 @@
     }
   }catch(e){}
   try{
+    if(sessionStorage.getItem("byamGuest")==="1") return;
     var g=document.createElement("div");
     g.id="byamGate";
     g.style.cssText="position:fixed;inset:0;z-index:20000;background:#0a1119;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px Barlow,system-ui,sans-serif;overflow:auto";
