@@ -362,15 +362,26 @@ var SKIP = ["Fat burners","Testosterone boosters","Mass gainers","BCAA powders"]
 
 /* ---------------- NAV ---------------- */
 
+var ICONS = {
+  home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10.5V20h11v-9.5"/></svg>',
+  food:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/></svg>',
+  habits:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  progress:'<svg viewBox="0 0 24 24"><path d="M5 20v-6"/><path d="M10 20V5"/><path d="M15 20v-9"/><path d="M20 20v-4"/></svg>'
+};
+
 function nav(active){
+  function item(href,key,label){
+    return '<a href="'+href+'" class="bnav-item'+(active===key?' on':'')+'">'+ICONS[key]+'<span>'+label+'</span></a>';
+  }
   return '<div class="topbar"><div class="wrap">' +
-    '<div class="brand">ATHLETIC <span>&</span> LEAN</div>' +
-    '<nav class="topnav">' +
-      '<a href="index.html"'+(active==="home"?' class="on"':'')+'>Home</a>' +
-      '<a href="food.html"'+(active==="food"?' class="on"':'')+'>Food Habits</a>' +
-      '<a href="habits.html"'+(active==="habits"?' class="on"':'')+'>Habits</a>' +
-      '<a href="progress.html"'+(active==="progress"?' class="on"':'')+'>Progress</a>' +
-    '</nav></div></div>';
+    '<a class="brand" href="index.html">ATHLETIC <span>&</span> LEAN</a>' +
+    '</div></div>' +
+    '<nav class="bnav">' +
+      item('index.html','home','Home') +
+      item('food.html','food','Food') +
+      item('habits.html','habits','Habits') +
+      item('progress.html','progress','Progress') +
+    '</nav>';
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
