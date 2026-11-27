@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f2efe7">
+<meta name="theme-color" content="#0e0f11">
 <title>Athletic & Lean - Home</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,31 +21,38 @@
 
   <div id="running"></div>
 
-  <div class="card today" id="todayCard"></div>
+  <div class="weekstrip" id="weekStrip"></div>
 
-  <a class="btn ghost" href="food.html">Food Habits - today's meals &amp; supplement plan</a>
+  <div class="todaycard" id="todayCard"></div>
+
+  <a class="linkcard" href="food.html">
+    <div>
+      <div class="lc-title">Food Habits</div>
+      <div class="lc-sub">Today's meals &amp; supplement plan</div>
+    </div>
+    <div class="lc-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+  </a>
 
   <div class="toggle" id="eqToggle">
     <button id="eqBody">Bodyweight only</button>
     <button id="eqFull">Dumbbells + pull-up bar</button>
   </div>
 
-  <div class="sec-title">This week - pick your day</div>
-  <div class="daygrid" id="dayGrid"></div>
+  <div class="sec-title">This week</div>
+  <div class="weekrows" id="weekRows"></div>
 
   <div class="sec-title">Daily targets</div>
-  <div class="chips">
-    <div class="chip">Height <b>5'8"</b></div>
-    <div class="chip">Start <b>80 kg</b></div>
-    <div class="chip">Calories <b>1,950-2,050 kcal</b></div>
-    <div class="chip">Protein <b>115-135 g</b></div>
-    <div class="chip">Water <b>3-3.5 L</b></div>
+  <div class="statgrid2">
+    <div class="stat2"><div class="l">Height</div><div class="v">5'8"</div></div>
+    <div class="stat2"><div class="l">Start weight</div><div class="v">80 kg</div></div>
+    <div class="stat2"><div class="l">Calories</div><div class="v">1,950-2,050</div></div>
+    <div class="stat2"><div class="l">Protein</div><div class="v">115-135 g</div></div>
+    <div class="stat2"><div class="l">Water</div><div class="v">3-3.5 L</div></div>
+    <div class="stat2"><div class="l">Sleep</div><div class="v">By 12 AM</div></div>
   </div>
 
-  <div class="card">
-    <h2>Important notes</h2>
-    <div id="notes"></div>
-  </div>
+  <div class="sec-title">Important notes</div>
+  <div id="notes"></div>
 
   <div class="foot">Built for Debashish's final plan. Data saves on this device.</div>
 </div>
@@ -58,6 +65,14 @@
 
   var todayKey = FT.todayDayKey();
   var wk = FT.weekKey();
+
+  function dayCounts(k){
+    var d = FT.PLAN[k], total=0, done=0;
+    if(d.type==="workout"){ (S.equipment?d.equip:d.body).forEach(function(e){ total++; if(S.ticks[wk+"|"+k+"|"+e.id]) done++; }); }
+    else { d.items.forEach(function(it){ total++; if(S.ticks[wk+"|"+k+"|"+it.id]) done++; }); }
+    if(S.football[wk+"|"+k]) done = total;
+    return {done:done, total:total, fb:!!S.football[wk+"|"+k]};
+  }
 
   // running session strip
   function renderRunning(){
@@ -77,59 +92,72 @@
     }
   },1000);
 
-  // today card
+  // dateline
   var p = FT.PLAN[todayKey];
   document.getElementById("dateLine").textContent = p.name + ", " + FT.niceDate(FT.todayStr());
-  var tc = document.getElementById("todayCard");
-  var countTxt = "";
-  if(p.type==="workout"){
-    var list = S.equipment ? p.equip : p.body;
-    var done = 0;
-    list.forEach(function(e){ if(S.ticks[wk+"|"+todayKey+"|"+e.id]) done++; });
-    countTxt = done+" of "+list.length+" exercises ticked this week.";
-  } else if(p.items){
-    var d2 = 0;
-    p.items.forEach(function(it){ if(S.ticks[wk+"|"+todayKey+"|"+it.id]) d2++; });
-    countTxt = d2+" of "+p.items.length+" ticked this week.";
+
+  // week strip (circles link to day pages)
+  function renderStrip(){
+    var todayIdx = FT.DAYS.indexOf(todayKey);
+    var html = "";
+    FT.DAYS.forEach(function(k, i){
+      var d = new Date();
+      d.setDate(d.getDate() + (i - todayIdx));
+      var c = dayCounts(k);
+      var cls = "wsday"+(k===todayKey?" today":"")+((c.total>0&&c.done===c.total)?" done":"");
+      html += '<a class="'+cls+'" href="day.html?day='+k+'">'+
+        '<div class="wslabel">'+FT.DAY_SHORT[k].charAt(0)+'</div>'+
+        '<div class="wscirc">'+d.getDate()+'</div></a>';
+    });
+    document.getElementById("weekStrip").innerHTML = html;
   }
-  var football = S.football[wk+"|"+todayKey];
-  tc.innerHTML =
-    '<div class="label">Today - '+FT.esc(p.name)+'</div>'+
-    '<h2>'+FT.esc(p.title)+'</h2>'+
-    '<p>'+FT.esc(p.sub)+(countTxt? " · "+countTxt : "")+(football?' · Football day':'' )+'</p>'+
-    '<a class="btn" href="day.html?day='+todayKey+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
+
+  // today hero card with progress ring
+  function renderToday(){
+    var c = dayCounts(todayKey);
+    var pct = c.total ? Math.round(c.done/c.total*100) : 0;
+    var R = 38, CIRC = Math.round(2*Math.PI*R*100)/100;
+    var off = Math.round(CIRC*(1-(c.total?c.done/c.total:0))*100)/100;
+    var sub = p.sub + (c.total? " · "+c.done+" of "+c.total+" done this week" : "") + (c.fb?' · Football day':'');
+    document.getElementById("todayCard").innerHTML =
+      '<div class="tc-top"><div class="tc-main">'+
+        '<div class="label">Today - '+FT.esc(p.name)+'</div>'+
+        '<h2>'+FT.esc(p.title)+'</h2>'+
+        '<p>'+FT.esc(sub)+'</p>'+
+      '</div>'+
+      '<div class="ring"><svg viewBox="0 0 84 84">'+
+        '<circle class="track" cx="42" cy="42" r="'+R+'"/>'+
+        '<circle class="fill" cx="42" cy="42" r="'+R+'" stroke-dasharray="'+CIRC+'" stroke-dashoffset="'+off+'"/>'+
+      '</svg><div class="pct">'+pct+'%</div></div></div>'+
+      '<a class="btn" href="day.html?day='+todayKey+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
+  }
 
   // equipment toggle
   function paintEq(){
     document.getElementById("eqBody").className = S.equipment ? "" : "on";
     document.getElementById("eqFull").className = S.equipment ? "on" : "";
   }
-  document.getElementById("eqBody").onclick = function(){ S.equipment=false; FT.save(S); paintEq(); renderGrid(); renderTodayCount(); };
-  document.getElementById("eqFull").onclick = function(){ S.equipment=true; FT.save(S); paintEq(); renderGrid(); renderTodayCount(); };
-  function renderTodayCount(){ /* refresh today card counts */ location.reload(); }
+  document.getElementById("eqBody").onclick = function(){ S.equipment=false; FT.save(S); paintEq(); renderStrip(); renderToday(); renderRows(); };
+  document.getElementById("eqFull").onclick = function(){ S.equipment=true; FT.save(S); paintEq(); renderStrip(); renderToday(); renderRows(); };
   paintEq();
 
-  // day grid
-  function renderGrid(){
-    var g = document.getElementById("dayGrid");
+  // week rows
+  function renderRows(){
     var html = "";
     FT.DAYS.forEach(function(k){
-      var d = FT.PLAN[k];
-      var total=0, done=0;
-      if(d.type==="workout"){ (S.equipment?d.equip:d.body).forEach(function(e){ total++; if(S.ticks[wk+"|"+k+"|"+e.id]) done++; }); }
-      else { d.items.forEach(function(it){ total++; if(S.ticks[wk+"|"+k+"|"+it.id]) done++; }); }
-      var fb = S.football[wk+"|"+k];
-      var cls = "daybtn"+(k===todayKey?" todayb":"")+((done===total&&total>0)||fb?" doneb":"");
-      html += '<a class="'+cls+'" href="day.html?day='+k+'">'+
-        '<div class="d">'+FT.esc(d.name)+'</div>'+
-        '<div class="t">'+FT.esc(d.title)+'</div>'+
-        '<div class="s">'+(fb?'Football day':done+'/'+total+' done')+'</div>'+
-        (((done===total&&total>0)||fb)?'<div class="tick">✓ complete</div>':'')+
-      '</a>';
+      var d = FT.PLAN[k], c = dayCounts(k);
+      var pct = c.total ? Math.round(c.done/c.total*100) : 0;
+      html += '<a class="wrow2'+(k===todayKey?" todayrow":"")+'" href="day.html?day='+k+'">'+
+        '<div class="dn">'+FT.DAY_SHORT[k]+'</div>'+
+        '<div class="tt">'+FT.esc(d.title)+'</div>'+
+        '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="ct">'+(c.fb?'FB':c.done+'/'+c.total)+'</div></a>';
     });
-    g.innerHTML = html;
+    document.getElementById("weekRows").innerHTML = html;
   }
-  renderGrid();
+  renderStrip();
+  renderToday();
+  renderRows();
 
   // notes
   document.getElementById("notes").innerHTML = FT.NOTES.map(function(n){
@@ -139,4 +167,3 @@
 </script>
 </body>
 </html>
-
