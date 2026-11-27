@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f14">
+<title>Athletic & Lean - Home</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Train. Eat. <em>Track.</em></h1>
+    <p>Lean, defined athletic physique &amp; long-term stamina. Your week, your food, your time - all in one place.</p>
+    <div class="chips">
+      <div class="chip">Height <b>5'8"</b></div>
+      <div class="chip">Start <b>80 kg</b></div>
+      <div class="chip">Calories <b>1,950-2,050 kcal</b></div>
+      <div class="chip">Protein <b>115-135 g</b></div>
+      <div class="chip">Water <b>3-3.5 L</b></div>
+    </div>
+  </div>
+
+  <div id="running"></div>
+
+  <div class="card today" id="todayCard"></div>
+
+  <div class="toggle" id="eqToggle">
+    <button id="eqBody">No equipment yet</button>
+    <button id="eqFull">Dumbbells + pull-up bar</button>
+  </div>
+
+  <div class="sec-title">This week - pick your day</div>
+  <div class="daygrid" id="dayGrid"></div>
+
+  <div class="card">
+    <h2>Important notes</h2>
+    <div id="notes"></div>
+  </div>
+
+  <div class="foot">Built for Debashish's final plan. Data saves on this device.</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var S = FT.load();
+  document.getElementById("nav").innerHTML = FT.nav("home");
+
+  var todayKey = FT.todayDayKey();
+  var wk = FT.weekKey();
+
+  // running session strip
+  function renderRunning(){
+    var el = document.getElementById("running");
+    if(S.activeSession){
+      var d = FT.PLAN[S.activeSession.day];
+      el.innerHTML = '<div class="running-strip"><span>Session running - '+FT.esc(d.name)+' '+
+        FT.esc(d.title)+' · <span id="runClock">'+FT.fmtClock((Date.now()-S.activeSession.startTs)/1000)+'</span></span>'+
+        '<a href="day.html?day='+S.activeSession.day+'">Open</a></div>';
+    } else { el.innerHTML = ""; }
+  }
+  renderRunning();
+  setInterval(function(){
+    if(S.activeSession){
+      var c = document.getElementById("runClock");
+      if(c) c.textContent = FT.fmtClock((Date.now()-S.activeSession.startTs)/1000);
+    }
+  },1000);
+
+  // today card
+  var p = FT.PLAN[todayKey];
+  var tc = document.getElementById("todayCard");
+  var countTxt = "";
+  if(p.type==="workout"){
+    var list = S.equipment ? p.equip : p.body;
+    var done = 0;
+    list.forEach(function(e){ if(S.ticks[wk+"|"+todayKey+"|"+e.id]) done++; });
+    countTxt = done+" of "+list.length+" exercises ticked this week.";
+  } else if(p.items){
+    var d2 = 0;
+    p.items.forEach(function(it){ if(S.ticks[wk+"|"+todayKey+"|"+it.id]) d2++; });
+    countTxt = d2+" of "+p.items.length+" ticked this week.";
+  }
+  var football = S.football[wk+"|"+todayKey];
+  tc.innerHTML =
+    '<div class="label">Today - '+FT.esc(p.name)+'</div>'+
+    '<h2>'+FT.esc(p.title)+'</h2>'+
+    '<p>'+FT.esc(p.sub)+(countTxt? " · "+countTxt : "")+(football?' · Football day':'' )+'</p>'+
+    '<a class="btn" href="day.html?day='+todayKey+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
+
+  // equipment toggle
+  function paintEq(){
+    document.getElementById("eqBody").className = S.equipment ? "" : "on";
+    document.getElementById("eqFull").className = S.equipment ? "on" : "";
+  }
+  document.getElementById("eqBody").onclick = function(){ S.equipment=false; FT.save(S); paintEq(); renderGrid(); renderTodayCount(); };
+  document.getElementById("eqFull").onclick = function(){ S.equipment=true; FT.save(S); paintEq(); renderGrid(); renderTodayCount(); };
+  function renderTodayCount(){ /* refresh today card counts */ location.reload(); }
+  paintEq();
+
+  // day grid
+  function renderGrid(){
+    var g = document.getElementById("dayGrid");
+    var html = "";
+    FT.DAYS.forEach(function(k){
+      var d = FT.PLAN[k];
+      var total=0, done=0;
+      if(d.type==="workout"){ (S.equipment?d.equip:d.body).forEach(function(e){ total++; if(S.ticks[wk+"|"+k+"|"+e.id]) done++; }); }
+      else { d.items.forEach(function(it){ total++; if(S.ticks[wk+"|"+k+"|"+it.id]) done++; }); }
+      var fb = S.football[wk+"|"+k];
+      var cls = "daybtn"+(k===todayKey?" todayb":"")+((done===total&&total>0)||fb?" doneb":"");
+      html += '<a class="'+cls+'" href="day.html?day='+k+'">'+
+        '<div class="d">'+FT.esc(d.name)+'</div>'+
+        '<div class="t">'+FT.esc(d.title)+'</div>'+
+        '<div class="s">'+(fb?'Football day':done+'/'+total+' done')+'</div>'+
+        (((done===total&&total>0)||fb)?'<div class="tick">✓ complete</div>':'')+
+      '</a>';
+    });
+    g.innerHTML = html;
+  }
+  renderGrid();
+
+  // notes
+  document.getElementById("notes").innerHTML = FT.NOTES.map(function(n){
+    return '<div class="notebox"><b>'+FT.esc(n.t)+':</b> '+FT.esc(n.d)+'</div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>
