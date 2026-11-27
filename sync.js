@@ -134,7 +134,7 @@ function setStatus(s){
 }
 function buildUI(){
   var css = document.createElement("style");
-  css.textContent = "#ftSyncBtn{position:fixed;right:10px;bottom:10px;z-index:9999;background:#ff7a1a;color:#fff;border:0;border-radius:20px;padding:9px 14px;font:600 13px Barlow,system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.5)}" +
+  css.textContent = "#ftSyncBtn{position:fixed;right:10px;bottom:92px;z-index:9999;background:#ff7a1a;color:#fff;border:0;border-radius:20px;padding:9px 14px;font:600 13px Barlow,system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.5)}" +
     "#ftSyncSheet{position:fixed;left:0;right:0;bottom:0;z-index:10000;background:#121c28;color:#fff;border-top:1px solid #2a3a4c;padding:16px;font:15px Barlow,system-ui,sans-serif;display:none}" +
     "#ftSyncSheet button{display:block;width:100%;margin:8px 0 0;padding:12px;border-radius:12px;border:1px solid #2a3a4c;background:#1b2a3a;color:#fff;font:600 15px Barlow,system-ui,sans-serif}" +
     "#ftSyncSheet button.pri{background:#ff7a1a;border-color:#ff7a1a}#ftSyncSheet p{margin:0 0 4px;color:#9fb0c3;font-size:13px}";
