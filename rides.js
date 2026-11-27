@@ -39,31 +39,6 @@ function tiles(){
 }
 
 
-/* ---------- image store (IndexedDB, stays on the phone) ---------- */
-function idb(){
-  return new Promise(function(res,rej){
-    var q=indexedDB.open("ftRideImages",1);
-    q.onupgradeneeded=function(){ q.result.createObjectStore("img"); };
-    q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
-  });
-}
-function idbPut(id,blob){ return idb().then(function(db){ return new Promise(function(res,rej){ var t=db.transaction("img","readwrite"); t.objectStore("img").put(blob,id); t.oncomplete=res; t.onerror=function(){rej(t.error);}; }); }); }
-function idbGet(id){ return idb().then(function(db){ return new Promise(function(res){ var q=db.transaction("img").objectStore("img").get(id); q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ res(null); }; }); }); }
-function idbDel(id){ return idb().then(function(db){ return new Promise(function(res){ var t=db.transaction("img","readwrite"); t.objectStore("img").delete(id); t.oncomplete=res; t.onerror=res; }); }).catch(function(){}); }
-function shrink(file){
-  return new Promise(function(res,rej){
-    var url=URL.createObjectURL(file), im=new Image();
-    im.onload=function(){
-      var sc=Math.min(1,900/im.width,2400/im.height), c=document.createElement("canvas");
-      c.width=Math.round(im.width*sc); c.height=Math.round(im.height*sc);
-      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
-      URL.revokeObjectURL(url);
-      c.toBlob(function(b){ b?res(b):rej(new Error("x")); },"image/jpeg",0.82);
-    };
-    im.onerror=function(){ URL.revokeObjectURL(url); rej(new Error("x")); };
-    im.src=url;
-  });
-}
 function parseDur(v){
   v=String(v||"").trim(); if(!v) return 0;
   var p=v.split(":").map(Number);
@@ -265,8 +240,7 @@ function finishRide(){
 function renderForm(id){
   killMap(); stopTick();
   var r=id?loadRides().filter(function(x){return x.id===id;})[0]:null;
-  var imgBlob=null, imgChanged=false, hadImg=!!(r&&r.img);
-  function val(v){ return v==null||v===""?"":String(v); }
+    function val(v){ return v==null||v===""?"":String(v); }
   var h='<div class="hero"><p class="dateline">'+(r?"Edit ride":"New ride")+'</p><h1>Add <em>ride</em></h1>'+
     '<p>Type the numbers from your band report. Only distance and time are needed.</p></div>';
   h+='<div class="card formcard">'+
@@ -277,19 +251,9 @@ function renderForm(id){
     '<label class="flab">Max speed (km/h)<input type="number" inputmode="decimal" step="0.01" min="0" id="fMax" class="dateinput" placeholder="29.76" value="'+val(r&&r.max?+kmh(r.max).toFixed(2):"")+'"></label></div>'+
     '<div class="frow"><label class="flab">Calories (kcal)<input type="number" inputmode="numeric" min="0" id="fCal" class="dateinput" placeholder="424" value="'+val(r&&r.cal)+'"></label>'+
     '<label class="flab">Avg heart rate<input type="number" inputmode="numeric" min="0" id="fHr" class="dateinput" placeholder="optional" value="'+val(r&&r.hr)+'"></label></div>'+
-    '<label class="flab">Report image (optional)<input type="file" accept="image/*" id="fImg" class="dateinput"></label>'+
-    '<div id="fPrev"></div>'+
-    '<p class="gpsnote" style="text-align:left">The image stays on this phone only. It is not uploaded anywhere.</p>'+
     '<p class="gpsnote bad" id="fErr" style="text-align:left"></p>'+
     '<div class="rrow"><button class="btn orange" id="fSave">Save ride</button><button class="btn ghost" id="fCancel">Cancel</button></div></div>';
   view.innerHTML=h;
-  var prev=document.getElementById("fPrev");
-  function showPrev(b){ if(!b){ prev.innerHTML=""; return; } var u=URL.createObjectURL(b); prev.innerHTML='<img class="rimg" src="'+u+'" alt="Report preview">'; }
-  if(hadImg) idbGet(r.id).then(function(b){ if(b&&!imgChanged) showPrev(b); });
-  document.getElementById("fImg").onchange=function(){
-    var f=this.files&&this.files[0]; if(!f) return;
-    shrink(f).then(function(b){ imgBlob=b; imgChanged=true; showPrev(b); }).catch(function(){ document.getElementById("fErr").textContent="Could not read that image."; });
-  };
   document.getElementById("fCancel").onclick=function(){ r?renderAnalysis(r.id):renderHome(); };
   document.getElementById("fSave").onclick=function(){
     var err=document.getElementById("fErr"); err.textContent="";
@@ -303,11 +267,11 @@ function renderForm(id){
     var p=ds.split("-"), start=new Date(+p[0],+p[1]-1,+p[2],12,0,0).getTime();
     if(r){ var t=new Date(r.start); start=new Date(+p[0],+p[1]-1,+p[2],t.getHours(),t.getMinutes(),0).getTime(); }
     var rec={id:r?r.id:Date.now(),manual:true,start:start,end:start+sec*1000,dist:km*1000,moving:sec,elapsed:sec,
-      avgKmh:avg>0?avg:(km/(sec/3600)),max:mx>0?mx/3.6:0,cal:cal>0?cal:0,hr:hr>0?hr:0,img:hadImg||!!imgBlob,pts:[]};
+      avgKmh:avg>0?avg:(km/(sec/3600)),max:mx>0?mx/3.6:0,cal:cal>0?cal:0,hr:hr>0?hr:0,pts:[]};
     var all=loadRides();
     if(r){ all=all.map(function(x){ return x.id===r.id?rec:x; }); } else { all.push(rec); }
     saveRides(all);
-    (imgChanged&&imgBlob?idbPut(rec.id,imgBlob):Promise.resolve()).then(function(){ renderAnalysis(rec.id); },function(){ renderAnalysis(rec.id); });
+    renderAnalysis(rec.id);
   };
 }
 function isoOf(ts){ var d=new Date(ts); function p(n){return (n<10?"0":"")+n;} return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
@@ -321,13 +285,11 @@ function renderManual(r){
     '<div class="stat"><div class="n">'+(r.max?f1(kmh(r.max)):"-")+'</div><div class="l">max km/h</div></div>'+
     '<div class="stat"><div class="n">'+(r.cal||"-")+'</div><div class="l">kcal</div></div>'+
     '<div class="stat"><div class="n">'+(r.hr||"-")+'</div><div class="l">avg heart rate</div></div></div>';
-  h+='<div id="mImg"></div>';
   h+='<div class="rrow" style="margin-top:16px"><button class="btn ghost" id="back">Back</button><button class="btn ghost" id="edit">Edit</button><button class="btn ghost" id="del">Delete</button></div>';
   view.innerHTML=h;
-  if(r.img) idbGet(r.id).then(function(b){ if(b){ document.getElementById("mImg").innerHTML='<div class="sec-title">Report</div><img class="rimg" src="'+URL.createObjectURL(b)+'" alt="Ride report">'; } });
   document.getElementById("back").onclick=renderHome;
   document.getElementById("edit").onclick=function(){ renderForm(r.id); };
-  document.getElementById("del").onclick=function(){ if(confirm("Delete this ride?")){ saveRides(loadRides().filter(function(x){return x.id!==r.id;})); idbDel(r.id); renderHome(); } };
+  document.getElementById("del").onclick=function(){ if(confirm("Delete this ride?")){ saveRides(loadRides().filter(function(x){return x.id!==r.id;})); renderHome(); } };
 }
 
 /* ---------- analysis ---------- */
