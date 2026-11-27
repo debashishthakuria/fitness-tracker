@@ -14,13 +14,13 @@
     setTimeout(function(){
       var x=document.getElementById("byamGate");
       if(x&&!x.getAttribute("data-ready")){
-        if(localStorage.getItem("byamSeen")==="1"){ x.remove(); }
+        if(localStorage.getItem("byamSeen")==="1"&&navigator.onLine===false){ x.remove(); }
         else{
           document.getElementById("byamGateBox").innerHTML='<div style="padding:24px;max-width:320px;letter-spacing:0;font-weight:500;font-size:15px">Cannot reach sign-in right now. Check your connection.<br><br><button id="byamOff" style="width:100%;padding:13px;border-radius:12px;border:0;background:#ff7a1a;color:#fff;font:600 15px Barlow,system-ui,sans-serif">Continue as guest</button></div>';
           document.getElementById("byamOff").onclick=function(){ sessionStorage.setItem("byamGuest","1"); location.reload(); };
         }
       }
-    },8000);
+    },12000);
   }catch(e){}
 })();
 /* Byam - shared data and helpers */

@@ -252,8 +252,10 @@ function showProfile(edit){
   };
 }
 
+var authSeen = false;
+setTimeout(function(){ if(!authSeen && !guest) showSignIn(); }, 3500);
 onAuthStateChanged(auth, function(u){
-  user = u;
+  authSeen = true; user = u;
   if(u){
     setStatus("Signed in");
     localStorage.setItem("byamSeen", "1");
