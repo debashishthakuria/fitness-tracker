@@ -1,19 +1,10 @@
-# Athletic & Lean Tracker
+# Byam
 
-Personal workout and food tracker website for Debashish's final plan
-(Sun-Sat home workout system + eating lifestyle and supplement plan).
+Home workout, rides and food tracker. Installable web app (PWA).
 
-- Multi-page static site, no build step, no backend.
-- All ticks, timers and logs are saved in the browser's localStorage on the device.
+- Multi-page static site, no build step.
+- Sign in with Google to save workouts, rides and weight to your own private cloud storage (Firebase Auth + Firestore, only your login can read your data).
+- First sign-in asks for name, age, height, weight and goal weight.
+- Guest mode: records are kept only for the current session and are not saved.
+- Works offline once opened (service worker). Add to Home screen to install.
 - Each exercise links an embedded YouTube form video for reference.
-
-Pages:
-- `index.html` - home: today's workout button, week grid, equipment toggle, notes
-- `day.html?day=sun|mon|tue|wed|thu|fri|sat` - per-day page with exercise
-  checklist, form videos and a session timer (time tracking)
-- `food.html` - meal template with daily ticks, protein sources, phased
-  supplement roadmap tied to plan start date
-- `habits.html` - 5 daily habits with streak
-- `progress.html` - weekly completion, session time history, body-weight log
-
-Hosted with GitHub Pages.

@@ -104,12 +104,12 @@
       : '<div class="empty">No timed sessions yet. Hit "Start session" on a day page when you begin.</div>';
 
     // weights
-    document.getElementById("sKgv").textContent = (S.startKg||80)+" kg";
+    document.getElementById("sKgv").textContent = (S.startKg?S.startKg+" kg":"Not set");
     var w = S.weights.slice(-10).reverse();
     var dEl = document.getElementById("wDelta");
-    if(S.weights.length){
+    if(S.weights.length && S.startKg){
       var latest = S.weights[S.weights.length-1].kg;
-      var sk = S.startKg||80; var diff = Math.round((latest-sk)*10)/10;
+      var sk = S.startKg; var diff = Math.round((latest-sk)*10)/10;
       dEl.innerHTML = '<div class="notebox">'+(diff===0?'At starting weight ('+sk+' kg).':(diff<0? Math.abs(diff)+' kg down from your '+sk+' kg start. Keep going.': diff+' kg above your '+sk+' kg start.'))+'</div>';
     } else { dEl.innerHTML = ''; }
     var wl = S.weights.slice(-10).map(function(x,i,arr){ return {x:x, idx:S.weights.length-arr.length+i}; }).reverse();
@@ -129,7 +129,7 @@
     }
   };
   document.getElementById("sKg").onclick = function(){
-    var v = parseFloat(prompt("Start weight in kg", S.startKg||80));
+    var v = parseFloat(prompt("Start weight in kg", S.startKg||""));
     if(v>=30 && v<=250){ S.startKg = v; FT.save(S); render(); }
   };
   document.getElementById("wAdd").onclick = function(){

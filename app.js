@@ -1,3 +1,28 @@
+/* Byam - guest mode and sign-in gate (runs before anything reads storage) */
+(function(){
+  try{
+    if(sessionStorage.getItem("byamGuest")==="1"){
+      Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return sessionStorage;}});
+    }
+  }catch(e){}
+  try{
+    var g=document.createElement("div");
+    g.id="byamGate";
+    g.style.cssText="position:fixed;inset:0;z-index:20000;background:#0a1119;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px Barlow,system-ui,sans-serif;overflow:auto";
+    g.innerHTML='<div id="byamGateBox" style="text-align:center;letter-spacing:.2em">BYAM</div>';
+    document.body.appendChild(g);
+    setTimeout(function(){
+      var x=document.getElementById("byamGate");
+      if(x&&!x.getAttribute("data-ready")){
+        if(localStorage.getItem("byamSeen")==="1"){ x.remove(); }
+        else{
+          document.getElementById("byamGateBox").innerHTML='<div style="padding:24px;max-width:320px;letter-spacing:0;font-weight:500;font-size:15px">Cannot reach sign-in right now. Check your connection.<br><br><button id="byamOff" style="width:100%;padding:13px;border-radius:12px;border:0;background:#ff7a1a;color:#fff;font:600 15px Barlow,system-ui,sans-serif">Continue as guest</button></div>';
+          document.getElementById("byamOff").onclick=function(){ sessionStorage.setItem("byamGuest","1"); location.reload(); };
+        }
+      }
+    },8000);
+  }catch(e){}
+})();
 /* Byam - shared data and helpers */
 (function(){
 "use strict";
@@ -16,7 +41,8 @@ function defState(){
     sessions: [],              // {date, day, seconds, ts}
     activeSession: null,       // {day, date, startTs}
     weights: [],               // {date, kg}
-    startKg: 80                // start weight, editable
+    startKg: null,             // start weight, set at first sign-in
+    profile: null              // {name, age, heightCm, weightKg, goalKg}
   };
 }
 
