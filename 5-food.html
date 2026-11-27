@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a1119">
+<title>Food Habits - Athletic & Lean</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+  <div class="hero">
+    <h1>Food <em>habits</em></h1>
+    <p>What to eat and when, plus your supplement roadmap. Read it, follow it, no ticking needed.</p>
+    <div class="chips">
+      <div class="chip">Calories <b>1,950-2,050 kcal</b></div>
+      <div class="chip">Protein <b>115-135 g</b></div>
+      <div class="chip">Water <b>3-3.5 L</b></div>
+      <div class="chip">Oil <b>2-3 tsp/day</b></div>
+      <div class="chip">Sleep <b>before midnight</b></div>
+      <div class="chip">Balance <b>80/20 rule</b></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Your daily meals</div>
+  <div id="meals"></div>
+
+  <div class="sec-title">Budget protein sources</div>
+  <div class="srcgrid" id="sources"></div>
+
+  <div class="sec-title">Supplement roadmap</div>
+  <div class="card">
+    <h2>Your plan start date</h2>
+    <p class="sub">Phases below light up based on which week you are in.</p>
+    <div class="inrow">
+      <input type="date" class="dateinput" id="startDate">
+    </div>
+    <div id="phaseBanner"></div>
+  </div>
+  <div id="phases"></div>
+
+  <div class="card">
+    <h2>Skip completely</h2>
+    <ul class="skiplist" id="skip"></ul>
+  </div>
+
+  <div class="foot">Plan comes from your final eating &amp; supplement file.</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var S = FT.load();
+  document.getElementById("nav").innerHTML = FT.nav("food");
+  var today = FT.todayStr();
+
+  // meals - plain information, no tracking
+  document.getElementById("meals").innerHTML = FT.MEALS.map(function(m){
+    return '<div class="meal"><h3>'+FT.esc(m.name)+' <span>· '+FT.esc(m.when)+'</span></h3>'+
+      '<ul class="meallist">'+m.items.map(function(it){ return '<li>'+FT.esc(it.text)+'</li>'; }).join("")+'</ul></div>';
+  }).join("");
+
+  // sources
+  document.getElementById("sources").innerHTML = FT.PROTEIN_SOURCES.map(function(s){
+    return '<div class="src"><b>'+FT.esc(s.n)+'</b> - '+FT.esc(s.d)+'</div>';
+  }).join("");
+
+  // start date + phases
+  var sd = document.getElementById("startDate");
+  if(!S.startDate){ S.startDate = today; FT.save(S); }
+  sd.value = S.startDate;
+  sd.onchange = function(){ if(sd.value){ S.startDate = sd.value; FT.save(S); renderPhases(); } };
+
+  function currentWeek(){
+    var a = new Date(S.startDate+"T00:00:00"), b = new Date(today+"T00:00:00");
+    var days = Math.floor((b-a)/(24*3600*1000));
+    return Math.floor(days/7)+1;
+  }
+  function renderPhases(){
+    var wkNum = currentWeek();
+    document.getElementById("phaseBanner").innerHTML =
+      '<div class="notebox" style="margin-top:12px">You are in <b>week '+(wkNum<1?1:wkNum)+'</b> of the plan.</div>';
+    var html = "";
+    FT.PHASES.forEach(function(ph){
+      var active = wkNum>=ph.fromWeek && wkNum<=ph.toWeek;
+      html += '<div class="phase'+(active?' active':'')+'">'+
+        '<div class="ph">'+FT.esc(ph.tag)+(active?'<span class="badge">YOU ARE HERE</span>':'')+'</div>'+
+        '<h3>'+FT.esc(ph.name)+'</h3>'+
+        '<ul>'+ph.lines.map(function(l){return '<li>'+FT.esc(l)+'</li>';}).join("")+'</ul>'+
+      '</div>';
+    });
+    document.getElementById("phases").innerHTML = html;
+  }
+  renderPhases();
+
+  document.getElementById("skip").innerHTML = FT.SKIP.map(function(s){return '<li>'+FT.esc(s)+'</li>';}).join("");
+})();
+</script>
+</body>
+</html>
+

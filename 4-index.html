@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a1119">
+<title>Athletic & Lean - Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+
+  <div class="hero">
+    <p class="dateline" id="dateLine"></p>
+    <h1>Your training week</h1>
+  </div>
+
+  <div id="running"></div>
+
+  <div class="weekstrip" id="weekStrip"></div>
+
+  <div class="todaycard" id="todayCard"></div>
+
+  <a class="linkcard" href="food.html">
+    <div>
+      <div class="lc-title">Food Habits</div>
+      <div class="lc-sub">Today's meals &amp; supplement plan</div>
+    </div>
+    <div class="lc-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+  </a>
+
+  <div class="toggle" id="eqToggle">
+    <button id="eqBody">Bodyweight only</button>
+    <button id="eqFull">Dumbbells + pull-up bar</button>
+  </div>
+
+  <div class="sec-title">This week</div>
+  <div class="weekrows" id="weekRows"></div>
+
+  <div class="sec-title">Daily targets</div>
+  <div class="statgrid2">
+    <div class="stat2"><div class="l">Height</div><div class="v">5'8"</div></div>
+    <div class="stat2"><div class="l">Start weight</div><div class="v">80 kg</div></div>
+    <div class="stat2"><div class="l">Calories</div><div class="v">1,950-2,050</div></div>
+    <div class="stat2"><div class="l">Protein</div><div class="v">115-135 g</div></div>
+    <div class="stat2"><div class="l">Water</div><div class="v">3-3.5 L</div></div>
+    <div class="stat2"><div class="l">Sleep</div><div class="v">By 12 AM</div></div>
+  </div>
+
+  <div class="sec-title">Important notes</div>
+  <div id="notes"></div>
+
+  <div class="foot">Built for Debashish's final plan. Data saves on this device.</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var S = FT.load();
+  document.getElementById("nav").innerHTML = FT.nav("home");
+
+  var todayKey = FT.todayDayKey();
+  var wk = FT.weekKey();
+
+  function dayCounts(k){
+    var d = FT.PLAN[k], total=0, done=0;
+    if(d.type==="workout"){ (S.equipment?d.equip:d.body).forEach(function(e){ total++; if(S.ticks[wk+"|"+k+"|"+e.id]) done++; }); }
+    else { d.items.forEach(function(it){ total++; if(S.ticks[wk+"|"+k+"|"+it.id]) done++; }); }
+    if(S.football[wk+"|"+k]) done = total;
+    return {done:done, total:total, fb:!!S.football[wk+"|"+k]};
+  }
+
+  // running session strip
+  function renderRunning(){
+    var el = document.getElementById("running");
+    if(S.activeSession){
+      var d = FT.PLAN[S.activeSession.day];
+      el.innerHTML = '<div class="running-strip"><span>Session running - '+FT.esc(d.name)+' '+
+        FT.esc(d.title)+' · <span id="runClock">'+FT.fmtClock((Date.now()-S.activeSession.startTs)/1000)+'</span></span>'+
+        '<a href="day.html?day='+S.activeSession.day+'">Open</a></div>';
+    } else { el.innerHTML = ""; }
+  }
+  renderRunning();
+  setInterval(function(){
+    if(S.activeSession){
+      var c = document.getElementById("runClock");
+      if(c) c.textContent = FT.fmtClock((Date.now()-S.activeSession.startTs)/1000);
+    }
+  },1000);
+
+  // dateline
+  var p = FT.PLAN[todayKey];
+  document.getElementById("dateLine").textContent = p.name + ", " + FT.niceDate(FT.todayStr());
+
+  // week strip (circles link to day pages)
+  function renderStrip(){
+    var todayIdx = FT.DAYS.indexOf(todayKey);
+    var html = "";
+    FT.DAYS.forEach(function(k, i){
+      var d = new Date();
+      d.setDate(d.getDate() + (i - todayIdx));
+      var c = dayCounts(k);
+      var cls = "wsday"+(k===todayKey?" today":"")+((c.total>0&&c.done===c.total)?" done":"");
+      html += '<a class="'+cls+'" href="day.html?day='+k+'">'+
+        '<div class="wslabel">'+FT.DAY_SHORT[k].charAt(0)+'</div>'+
+        '<div class="wscirc">'+d.getDate()+'</div></a>';
+    });
+    document.getElementById("weekStrip").innerHTML = html;
+  }
+
+  // today hero card with progress ring
+  function renderToday(){
+    var c = dayCounts(todayKey);
+    var pct = c.total ? Math.round(c.done/c.total*100) : 0;
+    var R = 38, CIRC = Math.round(2*Math.PI*R*100)/100;
+    var off = Math.round(CIRC*(1-(c.total?c.done/c.total:0))*100)/100;
+    var sub = p.sub + (c.total? " · "+c.done+" of "+c.total+" done this week" : "") + (c.fb?' · Football day':'');
+    document.getElementById("todayCard").innerHTML =
+      '<div class="tc-top"><div class="tc-main">'+
+        '<div class="label">Today - '+FT.esc(p.name)+'</div>'+
+        '<h2>'+FT.esc(p.title)+'</h2>'+
+        '<p>'+FT.esc(sub)+'</p>'+
+      '</div>'+
+      '<div class="ring"><svg viewBox="0 0 84 84">'+
+        '<circle class="track" cx="42" cy="42" r="'+R+'"/>'+
+        '<circle class="fill" cx="42" cy="42" r="'+R+'" stroke-dasharray="'+CIRC+'" stroke-dashoffset="'+off+'"/>'+
+      '</svg><div class="pct">'+pct+'%</div></div></div>'+
+      '<a class="btn" href="day.html?day='+todayKey+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
+  }
+
+  // equipment toggle
+  function paintEq(){
+    document.getElementById("eqBody").className = S.equipment ? "" : "on";
+    document.getElementById("eqFull").className = S.equipment ? "on" : "";
+  }
+  document.getElementById("eqBody").onclick = function(){ S.equipment=false; FT.save(S); paintEq(); renderStrip(); renderToday(); renderRows(); };
+  document.getElementById("eqFull").onclick = function(){ S.equipment=true; FT.save(S); paintEq(); renderStrip(); renderToday(); renderRows(); };
+  paintEq();
+
+  // week rows
+  function renderRows(){
+    var html = "";
+    FT.DAYS.forEach(function(k){
+      var d = FT.PLAN[k], c = dayCounts(k);
+      var pct = c.total ? Math.round(c.done/c.total*100) : 0;
+      html += '<a class="wrow2'+(k===todayKey?" todayrow":"")+'" href="day.html?day='+k+'">'+
+        '<div class="dn">'+FT.DAY_SHORT[k]+'</div>'+
+        '<div class="tt">'+FT.esc(d.title)+'</div>'+
+        '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="ct">'+(c.fb?'FB':c.done+'/'+c.total)+'</div></a>';
+    });
+    document.getElementById("weekRows").innerHTML = html;
+  }
+  renderStrip();
+  renderToday();
+  renderRows();
+
+  // notes
+  document.getElementById("notes").innerHTML = FT.NOTES.map(function(n){
+    return '<div class="notebox"><b>'+FT.esc(n.t)+':</b> '+FT.esc(n.d)+'</div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>
