@@ -32,6 +32,7 @@
 
   <div class="sec-title">Body weight log</div>
   <div class="card">
+    <p class="sub">Start weight: <b id="sKgv"></b> <button class="mini" id="sKg">Edit</button></p>
     <div class="inrow">
       <input type="number" step="0.1" min="30" max="250" class="dateinput" id="wInput" placeholder="Today's weight in kg">
       <button class="btn small" id="wAdd" style="margin-top:0">Log</button>
@@ -96,18 +97,34 @@
       : '<div class="empty">No timed sessions yet. Hit "Start session" on a day page when you begin.</div>';
 
     // weights
+    document.getElementById("sKgv").textContent = (S.startKg||80)+" kg";
     var w = S.weights.slice(-10).reverse();
     var dEl = document.getElementById("wDelta");
     if(S.weights.length){
       var latest = S.weights[S.weights.length-1].kg;
-      var diff = Math.round((latest-80)*10)/10;
-      dEl.innerHTML = '<div class="notebox">'+(diff===0?'At starting weight (80 kg).':(diff<0? Math.abs(diff)+' kg down from your 80 kg start. Keep going.': diff+' kg above your 80 kg start.'))+'</div>';
+      var sk = S.startKg||80; var diff = Math.round((latest-sk)*10)/10;
+      dEl.innerHTML = '<div class="notebox">'+(diff===0?'At starting weight ('+sk+' kg).':(diff<0? Math.abs(diff)+' kg down from your '+sk+' kg start. Keep going.': diff+' kg above your '+sk+' kg start.'))+'</div>';
     } else { dEl.innerHTML = ''; }
+    var wl = S.weights.slice(-10).map(function(x,i,arr){ return {x:x, idx:S.weights.length-arr.length+i}; }).reverse();
     document.getElementById("wList").innerHTML = w.length
-      ? w.map(function(x){ return '<div class="wrow"><span>'+FT.esc(FT.niceDate(x.date))+'</span><b>'+x.kg+' kg</b></div>'; }).join("")
+      ? wl.map(function(o){ return '<div class="wrow"><span>'+FT.esc(FT.niceDate(o.x.date))+'</span><span class="wedit"><b>'+o.x.kg+' kg</b><button data-e="'+o.idx+'">Edit</button><button data-d="'+o.idx+'">Delete</button></span></div>'; }).join("")
       : '<div class="empty">No entries yet. Log your morning weight after waking up.</div>';
   }
 
+  document.getElementById("wList").onclick = function(ev){
+    var t = ev.target, e = t.getAttribute && t.getAttribute("data-e"), d = t.getAttribute && t.getAttribute("data-d");
+    if(e!==null && e!==undefined){
+      var cur = S.weights[+e]; if(!cur) return;
+      var v = parseFloat(prompt("Weight in kg for "+FT.niceDate(cur.date), cur.kg));
+      if(v>=30 && v<=250){ cur.kg = v; FT.save(S); render(); }
+    } else if(d!==null && d!==undefined){
+      if(confirm("Delete this weight entry?")){ S.weights.splice(+d,1); FT.save(S); render(); }
+    }
+  };
+  document.getElementById("sKg").onclick = function(){
+    var v = parseFloat(prompt("Start weight in kg", S.startKg||80));
+    if(v>=30 && v<=250){ S.startKg = v; FT.save(S); render(); }
+  };
   document.getElementById("wAdd").onclick = function(){
     var inp = document.getElementById("wInput");
     var v = parseFloat(inp.value);
