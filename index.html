@@ -33,6 +33,14 @@
     <div class="lc-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
   </a>
 
+  <a class="linkcard" href="rides.html">
+    <div>
+      <div class="lc-title">Ride Tracker</div>
+      <div class="lc-sub">Live GPS map, speed and ride analysis</div>
+    </div>
+    <div class="lc-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+  </a>
+
   <div class="toggle" id="eqToggle">
     <button id="eqBody">Bodyweight only</button>
     <button id="eqFull">Dumbbells + pull-up bar</button>
@@ -44,7 +52,7 @@
   <div class="sec-title">Daily targets</div>
   <div class="statgrid2">
     <div class="stat2"><div class="l">Height</div><div class="v">5'8"</div></div>
-    <div class="stat2"><div class="l">Start weight</div><div class="v">80 kg</div></div>
+    <div class="stat2" id="startW" style="cursor:pointer"><div class="l">Start weight (tap to edit)</div><div class="v" id="startWv">80 kg</div></div>
     <div class="stat2"><div class="l">Calories</div><div class="v">1,950-2,050</div></div>
     <div class="stat2"><div class="l">Protein</div><div class="v">115-135 g</div></div>
     <div class="stat2"><div class="l">Water</div><div class="v">3-3.5 L</div></div>
@@ -129,7 +137,7 @@
         '<circle class="track" cx="42" cy="42" r="'+R+'"/>'+
         '<circle class="fill" cx="42" cy="42" r="'+R+'" stroke-dasharray="'+CIRC+'" stroke-dashoffset="'+off+'"/>'+
       '</svg><div class="pct">'+pct+'%</div></div></div>'+
-      '<a class="btn" href="day.html?day='+todayKey+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
+      '<a class="btn" href="'+(p.type==="cycle"?'rides.html':'day.html?day='+todayKey)+'">Open today\'s '+(p.type==="workout"?"workout":(p.type==="cycle"?"ride":"day"))+'</a>';
   }
 
   // equipment toggle
@@ -158,6 +166,12 @@
   renderStrip();
   renderToday();
   renderRows();
+
+  var sw=document.getElementById("startWv"); sw.textContent=(S.startKg||80)+" kg";
+  document.getElementById("startW").onclick=function(){
+    var v=parseFloat(prompt("Start weight in kg", S.startKg||80));
+    if(v>=30&&v<=250){ S.startKg=v; FT.save(S); sw.textContent=v+" kg"; }
+  };
 
   // notes
   document.getElementById("notes").innerHTML = FT.NOTES.map(function(n){
