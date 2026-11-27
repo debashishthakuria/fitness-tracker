@@ -1,4 +1,4 @@
-/* Athletic & Lean Tracker - shared data and helpers */
+/* Byam - shared data and helpers */
 (function(){
 "use strict";
 
@@ -372,7 +372,7 @@ function nav(active){
     return '<a href="'+href+'" class="bnav-item'+(active===key?' on':'')+'">'+ICONS[key]+'<span>'+label+'</span></a>';
   }
   return '<div class="topbar"><div class="wrap">' +
-    '<a class="brand" href="index.html">ATHLETIC <span>&</span> LEAN</a>' +
+    '<a class="brand" href="index.html">BYAM</a>' +
     '</div></div>' +
     '<nav class="bnav">' +
       item('index.html','home','Home') +
@@ -395,3 +395,5 @@ window.FT = {
 };
 })();
 
+
+;if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}
