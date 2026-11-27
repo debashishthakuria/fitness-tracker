@@ -367,7 +367,7 @@ function nav(active){
     '<div class="brand">ATHLETIC <span>&</span> LEAN</div>' +
     '<nav class="topnav">' +
       '<a href="index.html"'+(active==="home"?' class="on"':'')+'>Home</a>' +
-      '<a href="food.html"'+(active==="food"?' class="on"':'')+'>Food</a>' +
+      '<a href="food.html"'+(active==="food"?' class="on"':'')+'>Food Habits</a>' +
       '<a href="habits.html"'+(active==="habits"?' class="on"':'')+'>Habits</a>' +
       '<a href="progress.html"'+(active==="progress"?' class="on"':'')+'>Progress</a>' +
     '</nav></div></div>';
